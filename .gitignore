@@ -18,6 +18,7 @@ env/
 # Datasets locales grandes
 *.csv
 /tmp_dataset.zip
+dataset/
 
 # IDEs y sistema operativo
 .vscode/

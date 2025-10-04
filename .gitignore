@@ -1,0 +1,29 @@
+# Archivos de entorno
+*.env
+!/.env.example
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.pkl
+*.log
+
+# Entornos virtuales
+.venv/
+venv/
+env/
+
+# Datasets locales grandes
+*.csv
+/tmp_dataset.zip
+
+# IDEs y sistema operativo
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Ignorar base vectorial local
+vector_db/

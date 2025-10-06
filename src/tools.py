@@ -50,7 +50,7 @@ DEFAULT_USER_ID = VALID_USER_IDS[0]
 @tool
 def structured_search_tool(
     product_name: Optional[str] = None,
-    department: Optional[Literal[tuple(DEPARTMENT_NAMES)]] = None,
+    department: Optional[Literal[tuple(DEPARTMENT_NAMES)]] = None, # type: ignore
     aisle: Optional[str] = None,
     reordered: Optional[bool] = None,
     min_orders: Optional[int] = None,
@@ -179,7 +179,80 @@ def structured_search_tool(
     LLM Usage Note:
     This tool is ideal for filtered browsing, purchase history analysis, or category breakdowns.
     """
-    pass
+    try:
+        if history_only:
+            user_id = get_user_id()
+            if user_id is None:
+                return [{"error": "User ID not set. Cannot retrieve purchase history."}]
+            
+            user_orders = orders[orders["user_id"] == user_id]
+            
+            user_purchases = prior.merge(user_orders[["order_id", "user_id"]], on="order_id")
+            
+            purchase_stats = user_purchases.groupby("product_id").agg({
+                "order_id": "count",
+                "reordered": "sum",    
+                "add_to_cart_order": "mean" 
+            }).reset_index()
+            
+            purchase_stats.columns = ["product_id", "count", "reordered_count", "add_to_cart_order"]
+            
+            df = products.merge(purchase_stats, on="product_id")
+            df["reordered"] = df["reordered_count"] > 0
+            
+        else:
+            df = products.copy()
+        
+        df = df.merge(departments, on="department_id", how="left")
+        df = df.merge(aisles, on="aisle_id", how="left")
+        
+        if product_name is not None:
+            df = df[df["product_name"].str.contains(product_name, case=False, na=False)]
+        
+        if department is not None:
+            df = df[df["department"].str.lower() == department.lower()]
+        
+        if aisle is not None:
+            df = df[df["aisle"].str.lower() == aisle.lower()]
+        
+        if history_only and reordered is not None:
+            df = df[df["reordered"] == reordered]
+        
+        if history_only and min_orders is not None:
+            df = df[df["count"] >= min_orders]
+        
+        if group_by is not None:
+            if group_by == "department":
+                grouped = df.groupby("department").size().reset_index(name="num_products")
+                return grouped.to_dict("records")
+            elif group_by == "aisle":
+                grouped = df.groupby("aisle").size().reset_index(name="num_products")
+                return grouped.to_dict("records")
+        
+        if history_only and order_by is not None:
+            df = df.sort_values(by=order_by, ascending=ascending)
+        
+        if top_k is not None:
+            df = df.head(top_k)
+        
+        if df.empty:
+            return []
+        
+        output_columns = ["product_id", "product_name", "aisle", "department"]
+        if history_only:
+            if "count" in df.columns:
+                output_columns.append("count")
+            if "reordered" in df.columns:
+                output_columns.append("reordered")
+            if "add_to_cart_order" in df.columns:
+                output_columns.append("add_to_cart_order")
+        available_columns = [col for col in output_columns if col in df.columns]
+        result = df[available_columns].to_dict("records")
+        
+        return result
+        
+    except Exception as e:
+        return [{"error": f"Error during structured search: {str(e)}"}]
 
 
 # TODO
@@ -211,9 +284,9 @@ class RouteToCustomerSupport(BaseModel):
 
     This schema must be registered as a tool in the assistant's tool list.
     """
-
-    reason: str = Field(description="The reason why the customer needs support.")
-
+    reason: str = Field(
+        description="The reason why the customer needs support. Must describe the user's stated concern."
+    )
 
 class EscalateToHuman(BaseModel):
     severity: str = Field(
@@ -284,7 +357,20 @@ def search_products(query: str, top_k: int = 5):
     ]
     ```
     """
-    pass
+    query_text = make_query_prompt(query)
+    vector_store = get_vector_store()
+    results = vector_store.similarity_search(query_text, k=top_k)
+    formatted_results = []
+    for doc in results:
+        formatted_results.append({
+            "product_id": doc.metadata["product_id"],
+            "product_name": doc.metadata["product_name"],
+            "aisle": doc.metadata["aisle"],
+            "department": doc.metadata["department"],
+            "text": doc.page_content
+        })
+
+    return formatted_results
 
 
 # TODO
@@ -343,7 +429,20 @@ def search_tool(query: str) -> str:
     search_tool("something high protein for breakfast")
     ```
     """
-    pass
+    results = search_products(query)
+
+    if not results:
+        return "No products found matching your search."
+
+    formatted_output = []
+    for product in results:
+        product_line = f"- {product['product_name']} (ID: {product['product_id']})\n"
+        product_line += f"  Aisle: {product['aisle']}\n"
+        product_line += f"  Department: {product['department']}\n"
+        product_line += f"  Details: {product['text']}"
+        formatted_output.append(product_line)
+
+    return "\n\n".join(formatted_output)
 
 
 # ---- UPDATED: Cart tools with quantity support ----
@@ -352,7 +451,6 @@ from typing import Any, Dict, Optional
 from langchain_core.tools import tool
 from pydantic import BaseModel, Field
 
-# Simulated in-memory cart storage - now stores product_id: quantity pairs
 _cart_storage: Dict[str, Dict[int, int]] = {}
 _current_thread_id: Optional[str] = None
 
@@ -388,7 +486,6 @@ def cart_tool(
         if product_id is None:
             return "No product ID provided to add."
 
-        # If product already exists, increase quantity
         if product_id in cart:
             cart[product_id] += quantity
             return f"Added {quantity} more of product {product_id} to your cart. New quantity: {cart[product_id]}."
@@ -417,12 +514,10 @@ def cart_tool(
 
         product_name = _product_lookup.get(product_id, "Unknown Product")
 
-        # If quantity is specified and less than current quantity, reduce quantity
         if quantity > 1 and cart[product_id] > quantity:
             cart[product_id] -= quantity
             return f"Removed {quantity} of {product_name} (ID: {product_id}) from your cart. New quantity: {cart[product_id]}."
         else:
-            # Otherwise remove product completely
             del cart[product_id]
             return f"Removed {product_name} (ID: {product_id}) from your cart."
 
@@ -495,7 +590,14 @@ def create_tool_node_with_fallback(tools: list) -> ToolNode:
     Returns:
     - ToolNode: A LangGraph-compatible tool node with error fallback logic.
     """
-    pass
+    tool_node = ToolNode(tools)
+    error_handler = RunnableLambda(handle_tool_error)
+    tool_node_with_fallback = tool_node.with_fallbacks(
+        [error_handler],
+        exception_key="error"
+    )
+    
+    return tool_node_with_fallback
 
 
 __all__ = [

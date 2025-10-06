@@ -71,7 +71,17 @@ def sales_assistant(state: State, config: RunnableConfig, runnable=sales_runnabl
     - A dictionary with a `"messages"` key containing the new AI message(s).
     Example: `{"messages": [AIMessage(...)]}`
     """
-    pass
+    thread_id = config.get("configurable", {}).get("thread_id")
+    set_thread_id(thread_id)
+    user_id = config.get("configurable", {}).get("user_id", 1)
+    set_user_id(user_id)
+    
+    result = runnable.invoke(state)
+    
+    if isinstance(result, list):
+        return {"messages": result}
+    else:
+        return {"messages": [result]}
 
 
 def support_assistant(state: State, config: RunnableConfig) -> dict:

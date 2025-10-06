@@ -1,102 +1,121 @@
-# LLM Agents Final Project
-> AI-Powered Shopping Assistant
+# 🧠 LLM Agents Final Project
 
-Hi!
+## 🛍️ AI-Powered Shopping Assistant
 
-You will be expected to finish this on your own, but you can use the available channels on Discord to ask questions and help others. Please read the entire README and ASSIGNMENT.md before starting, this will give you a better idea of what you need to accomplish.
+An **AI-driven shopping assistant** designed to enhance customer experience and optimize e-commerce operations using **Large Language Models (LLMs)**.  
+This system enables natural language interaction for product discovery, cart management, and automated customer support, while reducing human workload and maintaining high-quality service.  
 
-## The Business problem
+---
 
-You are working for a major e-commerce company that wants to revolutionize their customer service experience using AI. They have requested the Data Science team to build an intelligent shopping assistant that can help customers find products, manage their shopping cart, and handle support requests automatically.
+## 🚀 Overview  
 
-The company wants to explore two main areas: **Customer Experience** and **Operational Efficiency**.
+The project simulates the development of an intelligent shopping assistant for a major e-commerce company.  
+It aims to:  
 
-Basically, they would like to provide customers with a conversational AI that can understand natural language queries about products, help them discover items they might like, manage their shopping cart, and automatically escalate complex issues to human support when needed. On the operational side, they want to reduce the workload on human customer service representatives while maintaining high-quality support.
+- Improve **customer experience** through conversational product search and personalized recommendations.  
+- Increase **operational efficiency** by automating common support interactions.  
 
-The system should be able to handle scenarios like customers searching for "healthy breakfast options", adding items to their cart, asking for refunds, or needing help with defective products. It should maintain conversation context across multiple turns and know when to bring in human supervisors for sensitive operations.
+The assistant can handle real-world scenarios such as:  
 
-## About the data
+- Searching for “healthy breakfast options.”  
+- Adding or removing items from the shopping cart.  
+- Requesting refunds or reporting defective products.  
+- Maintaining multi-turn conversation context and escalating complex issues to human support when needed.  
 
-You will consume and use data from a grocery store dataset containing product information, customer orders, and purchase history.
+---
 
-The dataset includes information about 49,000+ grocery products with names, departments, aisles, and pricing, along with historical order data showing what customers have purchased. The data is organized hierarchically with departments containing aisles, which contain individual products.
+## 🧩 Data  
 
-The system uses this data in two ways: structured search for SQL-like filtering over the catalog for precise queries, and semantic search using vector embeddings for understanding natural language product requests. Additionally, the system maintains conversation state and shopping cart information in memory during user sessions.
+The assistant is powered by a **grocery store dataset** containing:  
 
-## Technical aspects
+- **49,000+ products** with names, departments, aisles, and prices.  
+- **Historical order data** reflecting customer purchase behavior.  
 
-The team decided to build a conversational AI system using modern Large Language Model (LLM) technologies combined with traditional data processing techniques. The system needs to handle real-time conversations while maintaining state and context across multiple conversation turns.
+The system uses:  
 
-The technologies involved are:
-- Python as the main programming language
-- LangChain for LLM integration and tool management
-- LangGraph for conversation flow orchestration
-- OpenAI GPT models for natural language understanding
-- Chroma vector database for semantic product search
-- HuggingFace embeddings for text vectorization
-- Pandas for data manipulation and filtering
-- Pydantic for data validation and schema definition
-- Streamlit for the web interface
-- Pytest for comprehensive testing
+- **Structured search** (SQL-like filtering) for precise product queries.  
+- **Semantic search** (via embeddings) to interpret natural language queries.  
+- **Session memory** to maintain user context and cart state across conversations.  
 
-## Installation
+---
 
-Before starting, you must have:
-- Python 3.10+
-- An OpenAI API key (Or change for your model of choice!)
-- Git (for cloning if using Google Colab)
+## ⚙️ Tech Stack  
 
-A `requirements.txt` file is provided with all the needed Python libraries for running this project. For installing the dependencies just run:
+| Component | Description |
+|------------|-------------|
+| **Python** | Main programming language |
+| **LangChain** | LLM integration and tool management |
+| **LangGraph** | Conversation flow orchestration |
+| **OpenAI GPT** | Natural language understanding and reasoning |
+| **Chroma** | Vector database for semantic product search |
+| **HuggingFace** | Text embeddings for semantic similarity |
+| **Pandas** | Data manipulation and filtering |
+| **Pydantic** | Data validation and schema definition |
+| **Streamlit** | Web-based chat interface |
+| **Pytest** | Unit and integration testing |
 
-```console
-$ pip install -r requirements.txt
-```
+---
 
-**Important**: Set your OpenAI API key as an environment variable:
+## 🧰 Installation  
+
+### Prerequisites  
+
+- Python 3.10+  
+- OpenAI API key (or other model provider)  
+- Git  
+
+### Setup  
+
 ```bash
+# Clone the repository
+git clone https://github.com/yourusername/llm-shopping-assistant.git
+cd llm-shopping-assistant
+
+# Create and activate a virtual environment
+python -m venv venv
+source venv/bin/activate    # (Mac/Linux)
+venv\Scripts\activate       # (Windows)
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Configure your API key
 export OPENAI_API_KEY="your-api-key-here"
 ```
 
-*Note:* We encourage you to install those inside a virtual environment.
+## 🧮 Running the Application  
 
-Please see `ASSIGNMENT.md` for detailed instructions on building the vector database, which is required before the system will work.
+### 🧠 Command Line  
 
-## Code Style
-
-Following a style guide keeps the code's aesthetics clean and improves readability, making contributions and code reviews easier. Automated Python code formatters make sure your codebase stays in a consistent style without any manual work on your end. If adhering to a specific style of coding is important to you, employing an automated to do that job is the obvious thing to do. This avoids bike-shedding on nitpicks during code reviews, saving you an enormous amount of time overall.
-
-We use [Black](https://black.readthedocs.io/) for automated code formatting in this project, you can run it with:
-
-```console
-$ black --line-length=88 .
-```
-
-Wanna read more about Python code style and good practices? Please see:
-- [The Hitchhiker's Guide to Python: Code Style](https://docs.python-guide.org/writing/style/)
-- [Google Python Style Guide](https://google.github.io/styleguide/pyguide.html)
-
-## Tests
-
-We provide comprehensive unit tests and integration tests along with the project that you can run and check from your side the code meets the minimum requirements of correctness needed to approve. To run just execute:
-
-```console
-$ pytest tests/
-```
-
-## Running the Application
-
-Once you have completed the TODO functions and built the vector database, you can test the shopping assistant:
-
-### Command Line Testing
 ```python
 from src.conversation_runner import run_single_turn
+
 result = run_single_turn("Hi, I need some bananas", "test-thread-123")
 print(result)
 ```
 
-### Web Interface
-```console
-$ streamlit run app.py
+### 💬 Web Interface
+
+```python
+streamlit run app.py
 ```
 
-This will start a web interface where you can chat with the shopping assistant, test different conversation flows, and see the cart management in action.
+Access the interactive web app to chat with the assistant, explore conversation flows, and test cart management in real time.
+
+### 🧪 Testing
+
+Run all tests to ensure functionality and consistency:
+
+```python
+pytest tests/
+```
+
+### 📊 Summary
+
+This project demonstrates how to integrate LLMs, embeddings, and structured data processing to build a functional AI agent capable of:
+
+- Natural and contextual conversation.
+- Dynamic cart and session management.
+- Real-time decision-making and response generation.
+
+These components represent the foundation for next-generation AI-powered customer experiences.
